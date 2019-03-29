@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TouchScript.Gestures;
 using UnityEngine;
 using TouchScript.Gestures.TransformGestures;
+using TweenAnimation;
 
 public class CubeTouchScript : MonoBehaviour 
 {
