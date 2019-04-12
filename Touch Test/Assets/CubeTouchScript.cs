@@ -25,7 +25,7 @@ public class CubeTouchScript : MonoBehaviour
     private void OnEnable()
     {
         flickGesture = GetComponent<FlickGesture>();
-        //flickGesture.Flicked += flickedHandler;
+        flickGesture.Flicked += flickedHandler;
         flickGesture.MinDistance = 0.5f;
         flickGesture.MovementThreshold = 0.25f;
         print($"FLICK min: {flickGesture.MinDistance} threshold: {flickGesture.MovementThreshold} time: {flickGesture.FlickTime}");

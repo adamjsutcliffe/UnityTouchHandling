@@ -6,11 +6,14 @@ using TouchScript.Gestures.TransformGestures;
 
 public class CubeFlickScript : MonoBehaviour 
 {
+    [SerializeField] private Transform cube;
     [SerializeField] private int rotationFrames = 10;
     [SerializeField] private float rotationTime = 0.5f;
+    [SerializeField] private float decelerationRate = 0.1f;
 
     private FlickGesture flickGesture;
     private Vector2 screenSize;
+    private Vector2 startVector;
     private bool isFlicked;
 
     private void Awake()
@@ -38,34 +41,52 @@ public class CubeFlickScript : MonoBehaviour
         print($"FLICKED CUBE: {name} -> {flickGesture.ScreenFlickVector}");
         //if (flickGesture.ScreenFlickVector.y > 0)
         //{
-            //isFlicked = true;
-            StartCoroutine(RotateCube(flickGesture.ScreenFlickVector.y > 0));
+        //isFlicked = true;
+        //StartCoroutine(RotateCube(flickGesture.ScreenFlickVector.y > 0));
         //}
+        startVector = flickGesture.ScreenFlickVector / 10f;// * flickGesture.ScreenFlickVector.y / screenSize.y;
     }
 
-    private IEnumerator RotateCube(bool up)
+    private void Update()
     {
-        int counter = 0;
+        float deltaDecleration = decelerationRate * Time.deltaTime;
+        startVector -= new Vector2(startVector.x * deltaDecleration, startVector.y *deltaDecleration);
 
-        float currentRotation = transform.rotation.eulerAngles.x;
-        float remainder = 90.0f * (up ? 1 : -1); // - (currentRotation % 90.0f);
-        float newRotation = currentRotation + 90.0f - remainder;
-        print($"Rotation = current: {currentRotation} remainder: {remainder} new: {newRotation}");
-
-        //float currentNineties = currentRotation / 90.0f;
-        //float outstandingRotation = (90.0f * currentNineties) - currentRotation;
-        float increment = remainder / rotationFrames;
-        float spaces = rotationTime / rotationFrames;
-
-        print($"Rotate cube increment: {increment} space: {spaces} transform: {transform.rotation.eulerAngles}  remainder: {remainder}");
-
-        while (counter < rotationFrames)
-        {
-            transform.Rotate(increment, 0, 0);
-            counter += 1;
-            yield return new WaitForSeconds(spaces);
-        }
-        isFlicked = false;
-        //print($"Rotate cube end transform: {transform.rotation.eulerAngles}");
+        cube.Rotate(startVector.y, 0, 0);
     }
+
+    private float DecelerationVector()
+    { 
+        //deceleration = final velocity - initital velocity / time
+        //d = (vf - vi)/t
+
+          
+        return 0.0f;
+    }
+
+    //private IEnumerator RotateCube(bool up)
+    //{
+    //    int counter = 0;
+
+    //    float currentRotation = cube.rotation.eulerAngles.x;
+    //    float remainder = 90.0f * (up ? 1 : -1); // - (currentRotation % 90.0f);
+    //    float newRotation = currentRotation + 90.0f - remainder;
+    //    print($"Rotation = current: {currentRotation} remainder: {remainder} new: {newRotation}");
+
+    //    //float currentNineties = currentRotation / 90.0f;
+    //    //float outstandingRotation = (90.0f * currentNineties) - currentRotation;
+    //    float increment = remainder / rotationFrames;
+    //    float spaces = rotationTime / rotationFrames;
+
+    //    print($"Rotate cube increment: {increment} space: {spaces} transform: {cube.rotation.eulerAngles}  remainder: {remainder}");
+
+    //    while (counter < rotationFrames)
+    //    {
+    //        cube.Rotate(increment, 0, 0);
+    //        counter += 1;
+    //        yield return new WaitForSeconds(spaces);
+    //    }
+    //    isFlicked = false;
+    //    //print($"Rotate cube end transform: {transform.rotation.eulerAngles}");
+    //}
 }
