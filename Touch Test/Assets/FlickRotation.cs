@@ -1,28 +1,30 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using TouchScript.Gestures;
 using TouchScript.Gestures.TransformGestures;
 using UnityEngine;
+using Pixelplacement;
 
 public class FlickRotation : MonoBehaviour
 {
 
     [SerializeField] private Transform cylinder;
-    [SerializeField] private Transform[] panels;
+    //[SerializeField] private Transform[] panels;
     [SerializeField] private int minRow;
     [SerializeField] private int maxRow;
+    [SerializeField] private int panelCount;
+    [SerializeField] private SpinnerFace panelPrefab;
 
     private PressGesture pressGesture;
     private FlickGesture flickGesture;
     private TransformGesture transformGesture;
+    private ReleaseGesture releaseGesture;
 
     private Vector2 screenSize;
 
     private bool isFlicked;
-    private bool goingUpwards;
-
+    private bool isDragged;
 
     private Quaternion flickDestination;
     private Quaternion[] flickLocations;
@@ -35,24 +37,82 @@ public class FlickRotation : MonoBehaviour
 
     private const float RESET_TIME = 0.5f;
 
+    private float dragAngle = 0;
+
+    private List<SpinnerFace> panels = new List<SpinnerFace>();
+
+    //Double tap saver
+    private Quaternion savedDestination;
+
+    public int CurrentRow => currentRow;
+
     private void Awake()
     {
         screenSize = new Vector2(Screen.width, Screen.height);
-        print($"SCREEN SIZE: {screenSize}");
         totalRows = maxRow - minRow;
+
+        float angle = 360.0f / panelCount;
+        float radAngle = Mathf.Deg2Rad * angle * 0.5f;
+        //RectTransform panelRect = panelPrefab.GetComponent<RectTransform>();
+        Transform panelRect = panelPrefab.transform;
+        print($"Panel size: {panelRect.localScale.x}_{panelRect.localScale.y} angle: {angle} -> rad {radAngle}");
+        float startZ = (panelRect.localScale.y * 0.5f) / Mathf.Tan(radAngle);
+        Vector2 startPoint = new Vector2(0, startZ);
+        print($"Start point: {startPoint} -> Z: {startZ}");
+        float accumulatedAngle = 0.0f;
+        for (int i = 0; i < panelCount; i++)
+        {
+            Vector2 position = RotatePoint(startPoint, accumulatedAngle);
+            accumulatedAngle += angle * Mathf.Deg2Rad;
+            Vector3 actualPosition = new Vector3(0, position.x * -1, position.y * -1);
+            print($"Index: {i} position: {position} = {actualPosition} angle: {accumulatedAngle * Mathf.Rad2Deg}");
+            SpinnerFace panel = Instantiate(panelPrefab, cylinder);
+            panel.name = $"Panel{i}";
+            panel.transform.localPosition = actualPosition;
+            panel.transform.localRotation = Quaternion.Euler(angle * i, 0, 0);
+            panels.Add(panel);
+        }
+    }
+
+
+
+    private Vector2 RotatePoint(Vector2 point, float angle)
+    {
+        float newX = point.x * Mathf.Cos(angle) - point.y * Mathf.Sin(angle);
+        float newY = point.y * Mathf.Cos(angle) + point.x * Mathf.Sin(angle);
+        //print($"Rotate Point {point} by angle {angle} = {newX}_{newY}");
+        return new Vector2(newX, newY);
     }
 
     private void Start()
     {
-        float angle = 360.0f / panels.Length;
-        print($"Start panel angle: {angle} ");
-        flickLocations = new Quaternion[panels.Length];
-        for (int i = 0; i < panels.Length; i++)
+        float angle = 360.0f / panels.Count;
+        //print($"Start panel angle: {angle} ");
+        flickLocations = new Quaternion[panels.Count];
+        for (int i = 0; i < panels.Count; i++)
         {
             flickLocations[i] = Quaternion.Euler(angle * i, 0, 0);
-            print($"Click location {i}: {flickLocations[i]} = {flickLocations[i].eulerAngles}");
         }
         flickDestination = flickLocations[0];
+        UpdatePanels();
+    }
+
+    private void UpdatePanels()
+    {
+        //print($"UPDATE PANELS - flick: {flickIndex} total: {totalRows} current: {currentRow}");
+
+        SpinnerFace frontFace = panels[flickIndex]; //.GetComponent<SpinnerFace>();
+        frontFace.UpdateNumber(currentRow + 1);
+
+        int flickUpOne = increaseIndex(flickIndex, panels.Count);
+        SpinnerFace frontUpOneFace = panels[flickUpOne]; //.GetComponent<SpinnerFace>();
+        int flickUpOneCurrentRow = increaseIndex(currentRow, totalRows);
+        frontUpOneFace.UpdateNumber(flickUpOneCurrentRow + 1);
+
+        int flickDownOne = decreaseIndex(flickIndex, panels.Count);
+        SpinnerFace frontDownOneFace = panels[flickDownOne]; //.GetComponent<SpinnerFace>();
+        int flickDownOneCurrentRow = decreaseIndex(currentRow, totalRows);
+        frontDownOneFace.UpdateNumber(flickDownOneCurrentRow + 1);
     }
 
     private void OnEnable()
@@ -65,6 +125,9 @@ public class FlickRotation : MonoBehaviour
         pressGesture = GetComponent<PressGesture>();
         pressGesture.Pressed += pressedHandler;
 
+        releaseGesture = GetComponent<ReleaseGesture>();
+        releaseGesture.Released += releaseHandler;
+
         transformGesture = GetComponent<TransformGesture>();
         transformGesture.Transformed += transformedHandler;
         transformGesture.TransformCompleted += transformedEndedHandler;
@@ -75,25 +138,27 @@ public class FlickRotation : MonoBehaviour
     {
         flickGesture.Flicked -= flickedHandler;
         pressGesture.Pressed -= pressedHandler;
+        releaseGesture.Released -= releaseHandler;
         transformGesture.Transformed -= transformedHandler;
         transformGesture.TransformCompleted -= transformedEndedHandler;
     }
 
     private void flickedHandler(object sender, System.EventArgs e)
     {
-        goingUpwards = flickGesture.ScreenFlickVector.y > 0;
+        bool goingUpwards = flickGesture.ScreenFlickVector.y > 0;
         isFlicked = true;
-        print($"FLICKED CUBE: {name} -> {flickGesture.ScreenFlickVector} time: {flickGesture.ScreenFlickTime} going upwards: {goingUpwards}");
+        //print($"FLICKED CUBE: {name} -> {flickGesture.ScreenFlickVector} time: {flickGesture.ScreenFlickTime} going upwards: {goingUpwards}");
         if (goingUpwards)
         {
-            flickIndex = increaseIndex(flickIndex, panels.Length);
+            flickIndex = increaseIndex(flickIndex, panels.Count);
             currentRow = increaseIndex(currentRow, totalRows);
         }
         else
         {
-            flickIndex = decreaseIndex(flickIndex, panels.Length);
+            flickIndex = decreaseIndex(flickIndex, panels.Count);
             currentRow = decreaseIndex(currentRow, totalRows);
         }
+        UpdatePanels();
         flickDestination = flickLocations[flickIndex];
         flickTime = 0;
     }
@@ -126,23 +191,39 @@ public class FlickRotation : MonoBehaviour
     private void pressedHandler(object sender, System.EventArgs e)
     {
         isFlicked = false;
+        isDragged = false;
+        savedDestination = new Quaternion(flickDestination.x, flickDestination.y, flickDestination.z, flickDestination.w);
         flickDestination = Quaternion.identity;
+        //print($"Pressed 2 flick: {savedDestination} from {flickDestination}");
+        dragAngle = 0.0f;
     }
 
+    private void releaseHandler(object sender, System.EventArgs e)
+    {
+        //print($"released - drag: {isDragged} - flick: {flickDestination}");
+        if (!isDragged)
+        {
+            flickDestination = savedDestination;
+            flickTime = 0.0f;
+            isFlicked = true;
+            //print($"Not dragged - {flickDestination}");
+        }
+    }
 
     private void transformedHandler(object sender, System.EventArgs e)
     {
         Vector2 diff = transformGesture.ScreenPosition - transformGesture.PreviousScreenPosition;
-        goingUpwards = diff.y > 0;
+        //goingUpwards = diff.y > 0;
         if (transformGesture.State == Gesture.GestureState.Changed)
         {
-            //if (!isFlicked)
-            {
-                float normalisedDiffY = diff.y / screenSize.y;
-                float increment = 60.0f * normalisedDiffY;
-                cylinder.Rotate(increment, 0, 0);
-            }
+            isDragged = true;
+            float normalisedDiffY = diff.y / screenSize.y;
+            float increment = 60.0f * normalisedDiffY;
+            cylinder.Rotate(increment, 0, 0);
+            dragAngle += increment;
+
         }
+        //print("transformed");
     }
 
     private void transformedEndedHandler(object sender, System.EventArgs e)
@@ -151,34 +232,36 @@ public class FlickRotation : MonoBehaviour
         {
             CheckRemainder(true);
         }
+        //print("END transformed");
     }
 
     private void CheckRemainder(bool shouldMove)
     {
-        float panelAngle = (360.0f / panels.Length);
-        float remainder = cylinder.rotation.eulerAngles.x % panelAngle;
-        float dividor = cylinder.rotation.eulerAngles.x / panelAngle;
-        bool quaternionFlop = cylinder.rotation.eulerAngles.y != 0f;
-        print($"Check remainder: {remainder} ({dividor}) - current: {cylinder.rotation.eulerAngles.x} = {flickIndex}  going up? {goingUpwards}");
+        float panelAngle = 360.0f / panels.Count;
+        //float remainder = cylinder.rotation.eulerAngles.x % panelAngle;
+        //float dividor = cylinder.rotation.eulerAngles.x / panelAngle;
+        //bool quaternionFlop = cylinder.rotation.eulerAngles.y != 0f;
+        //print($"Check remainder: {remainder} ({dividor}) - current: {cylinder.rotation.eulerAngles.x} = {flickIndex}  going up? {goingUpwards}");
 
-        if (goingUpwards)
+        if (dragAngle > 0)
         {
-            if (remainder > panelAngle * 0.5f)
+            if (Math.Abs(dragAngle) > panelAngle * 0.5f)
             {
-                flickIndex = increaseIndex(flickIndex, panels.Length);
+                flickIndex = increaseIndex(flickIndex, panels.Count);
                 currentRow = increaseIndex(currentRow, totalRows);
             }
-            print($"Going up -> new flick index {flickIndex}");
+            //print($"Going up -> new flick index {flickIndex}");
         }
         else
         {
-            if (remainder < panelAngle * 0.5f)
+            if (Math.Abs(dragAngle) > panelAngle * 0.5f)
             {
-                flickIndex = decreaseIndex(flickIndex, panels.Length);
+                flickIndex = decreaseIndex(flickIndex, panels.Count);
                 currentRow = decreaseIndex(currentRow, totalRows);
             }
-            print($"Going down -> new flick index {flickIndex}");
+            //print($"Going down -> new flick index {flickIndex}");
         }
+        UpdatePanels();
 
         if (shouldMove)
         {
@@ -194,6 +277,11 @@ public class FlickRotation : MonoBehaviour
         {
             cylinder.rotation = Quaternion.Slerp(cylinder.rotation, flickDestination, flickTime);
             flickTime += Time.deltaTime;
+            if (flickTime > 1)
+            {
+                isFlicked = false;
+                cylinder.rotation = flickDestination;
+            }
         }
         else if (rotationTime > 0)
         {
@@ -211,24 +299,42 @@ public class FlickRotation : MonoBehaviour
     {
         if (flickIndex == 0 && currentRow != 0)
         {
-            
             int halfWay = (maxRow - minRow) / 2;
             bool isOverHalfWay = currentRow > halfWay;
-            print($"Reset spinner - cylinder already at '0' halfway: {halfWay} isOver? {isOverHalfWay}");
+            //print($"Reset spinner - cylinder already at '0' halfway: {halfWay} isOver? {isOverHalfWay}");
             isFlicked = false;
-            rotationAngle = 720 * (isOverHalfWay ? 1 : -1);
+            rotationAngle = 360 * (isOverHalfWay ? 1 : -1);
             rotationTime = RESET_TIME;
-        } else
+        }
+        else
         {
-            print("Reset spinner - normal");
+            //print("Reset spinner - normal");
             flickIndex = 0;
             flickDestination = flickLocations[flickIndex];
             flickTime = 0;
         }
+        currentRow = 0;
+        UpdatePanels();
     }
 
-    private void OnGUI()
+    //private void OnGUI()
+    //{
+    //    GUIStyle guiStyle = new GUIStyle();
+    //    guiStyle.fontSize = 30;
+    //    GUI.color = Color.black;
+    //    GUI.Label(new Rect(10, 10, 500, 40), $"Flick index: {flickIndex} CurrentRow: {currentRow} cylinder: {cylinder.rotation.eulerAngles}", guiStyle);
+    //    GUI.Label(new Rect(10, 60, 500, 40), $"Drag: {dragAngle} - flick time: {flickTime}", guiStyle);
+    //}
+
+    public void SpinTest()
     {
-        GUI.Label(new Rect(10, 10, 500, 20), $"Flick index: {flickIndex} CurrentRow: {currentRow} cylinder: {cylinder.rotation.eulerAngles}");
+        Vector3 start = new Vector3(0, 0, 0);
+        Vector3 end = new Vector3(360, 0, 0);
+        Tween.Value(start, end, TweenUpdateValue, 2.0f, 0.0f);
+    }
+
+    private void TweenUpdateValue(Vector3 vector)
+    {
+        print($"Tween update: {vector}");
     }
 }
