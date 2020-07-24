@@ -139,7 +139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &23298867
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -621,7 +621,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &267507550
 Transform:
   m_ObjectHideFlags: 0
@@ -1606,6 +1606,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Quad One
       objectReference: {fileID: 0}
+    - target: {fileID: 4435272141256234703, guid: 2c489d6ccc2d7497cbff49de8985e27e,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7905186399618584064, guid: 2c489d6ccc2d7497cbff49de8985e27e,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -2019,17 +2024,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cylinder: {fileID: 1688611080}
-  panels:
-  - {fileID: 935003873}
-  - {fileID: 1238123630}
-  - {fileID: 2002956173}
-  - {fileID: 267507550}
-  - {fileID: 1409628988}
-  - {fileID: 507612221}
   minRow: 0
   maxRow: 36
-  panelCount: 6
-  panelPrefab: {fileID: 4435272141256234703, guid: 2c489d6ccc2d7497cbff49de8985e27e,
+  panelCount: 11
+  panelPrefab: {fileID: 4435272141256234701, guid: 2c489d6ccc2d7497cbff49de8985e27e,
     type: 3}
 --- !u!114 &1155853439
 MonoBehaviour:
@@ -2352,7 +2350,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1238123630
 Transform:
   m_ObjectHideFlags: 0
@@ -2461,7 +2459,7 @@ RectTransform:
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -2919,7 +2917,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1409628988
 Transform:
   m_ObjectHideFlags: 0
@@ -3539,7 +3537,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1466069932
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4452,7 +4450,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2002956173
 Transform:
   m_ObjectHideFlags: 0
@@ -4956,8 +4954,8 @@ RectTransform:
   m_Father: {fileID: 1999913032}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 0.3333333}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -5069,6 +5067,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Quad Two
+      objectReference: {fileID: 0}
+    - target: {fileID: 4435272141256234703, guid: 2c489d6ccc2d7497cbff49de8985e27e,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7905186399618584064, guid: 2c489d6ccc2d7497cbff49de8985e27e,
         type: 3}
